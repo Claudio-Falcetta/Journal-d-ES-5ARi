@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Finasteride — Suivi clinique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F2EFE8;
+    --border: rgba(0,0,0,0.09);
+    --border-strong: rgba(0,0,0,0.18);
+    --text: #1A1916;
+    --text2: #6B6860;
+    --text3: #A8A49D;
+    --accent: #2A6049;
+    --accent-light: #E8F2ED;
+    --accent-mid: #5B9E82;
+    --danger: #C0392B;
+    --danger-light: #FDECEA;
+    --warning: #B7791F;
+    --warning-light: #FEF3C7;
+    --info: #1D4E8F;
+    --info-light: #EBF2FC;
+    --radius: 10px;
+    --radius-lg: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+
+  /* AUTH */
+  #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 3rem 2.5rem; width: 100%; max-width: 440px; box-shadow: var(--shadow); animation: fadeUp 0.35s ease; }
+  .auth-logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--accent); margin-bottom: 4px; }
+  .auth-sub { font-size: 13px; color: var(--text3); margin-bottom: 2rem; }
+  .auth-tabs { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.5rem; }
+  .auth-tab { flex: 1; padding: 9px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; background: transparent; border: none; color: var(--text2); transition: all 0.15s; }
+  .auth-tab.active { background: var(--accent); color: #fff; }
+  .field-group { margin-bottom: 1rem; }
+  .field-group label { display: block; font-size: 11px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .field-group input { width: 100%; padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.15s; }
+  .field-group input:focus { border-color: var(--accent); }
+  .btn-main { width: 100%; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.15s; }
+  .btn-main:hover { opacity: 0.88; }
+  .auth-msg { font-size: 13px; padding: 10px 14px; border-radius: var(--radius); margin-top: 1rem; display: none; }
+  .auth-msg.error { background: var(--danger-light); color: var(--danger); display: block; }
+  .auth-msg.success { background: var(--accent-light); color: var(--accent); display: block; }
+  .security-note { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 11px; color: var(--text3); line-height: 1.7; }
+
+  /* APP */
+  #app-screen { display: none; min-height: 100vh; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; gap: 1.5rem; position: sticky; top: 0; z-index: 100; height: 58px; }
+  .brand { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--accent); white-space: nowrap; }
+  .nav-tabs { display: flex; gap: 0; margin-left: auto; }
+  .nav-tab { padding: 6px 16px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 400; color: var(--text2); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+  .topbar-user { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text2); white-space: nowrap; }
+  .btn-logout { padding: 6px 14px; font-size: 12px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border-strong); background: none; border-radius: var(--radius); cursor: pointer; color: var(--text2); }
+  .btn-logout:hover { background: var(--surface2); }
+  .main { max-width: 980px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .card-title { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); margin-bottom: 1.25rem; }
+  .section-title { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--text); margin-bottom: 12px; }
+
+  /* FORM */
+  .meta-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.25rem; }
+  .meta-field { display: flex; flex-direction: column; gap: 5px; }
+  .meta-field label, .flabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; color: var(--text2); }
+  .meta-field input[type=date], .meta-field select { padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); outline: none; }
+  .meta-field input:focus, .meta-field select:focus { border-color: var(--accent); }
+  .day-chip { padding: 6px 14px; background: var(--accent-light); color: var(--accent); border-radius: 99px; font-size: 12px; font-weight: 500; }
+  .sliders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 14px; margin-bottom: 1.25rem; }
+  .slider-field { display: flex; flex-direction: column; gap: 6px; }
+  .slider-row { display: flex; align-items: center; gap: 8px; }
+  .slider-row input[type=range] { flex: 1; -webkit-appearance: none; height: 4px; border-radius: 2px; background: var(--surface2); outline: none; cursor: pointer; }
+  .slider-row input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+  .slider-val { font-size: 15px; font-weight: 500; min-width: 22px; text-align: right; }
+  .toggle-group { display: flex; gap: 6px; }
+  .toggle-btn { padding: 7px 18px; font-size: 13px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; background: var(--surface); color: var(--text2); transition: all 0.12s; }
+  .toggle-btn.yes { background: var(--accent-light); color: var(--accent); border-color: var(--accent-mid); }
+  .toggle-btn.no { background: var(--danger-light); color: var(--danger); border-color: #e5aba4; }
+  .notes-area { width: 100%; padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 13px; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); resize: vertical; min-height: 70px; outline: none; margin-bottom: 1.25rem; }
+  .notes-area:focus { border-color: var(--accent); }
+  .btn-save { padding: 10px 24px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; cursor: pointer; }
+  .btn-save:hover { opacity: 0.88; }
+  .info-strip { background: var(--info-light); border-left: 3px solid var(--info); padding: 10px 14px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 12px; color: var(--info); margin-bottom: 1rem; line-height: 1.6; }
+  .flash { padding: 10px 14px; border-radius: var(--radius); font-size: 13px; margin-bottom: 1rem; display: none; }
+  .flash.ok { background: var(--accent-light); color: var(--accent); display: block; }
+  .flash.err { background: var(--danger-light); color: var(--danger); display: block; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; color: var(--text3); padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface2); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr.adverse-row { background: rgba(192,57,43,0.04); }
+  .score-pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-weight: 500; font-size: 12px; }
+  .pill-green { background: #E8F5EE; color: #1E6B40; }
+  .pill-amber { background: #FEF3C7; color: #92580A; }
+  .pill-red { background: #FDECEA; color: #C0392B; }
+  .pill-alert { background: #C0392B; color: #fff; outline: 2px solid rgba(192,57,43,0.35); outline-offset: 1px; }
+  .phase-tag { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+  .tag-pre { background: var(--info-light); color: var(--info); }
+  .tag-post { background: var(--accent-light); color: var(--accent); }
+  .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 4px; }
+  .del-btn:hover { color: var(--danger); background: var(--danger-light); }
+  .empty-msg { text-align: center; padding: 3rem 1rem; color: var(--text3); font-size: 14px; }
+
+  /* METRIC GRID */
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .metric-card { background: var(--surface2); border-radius: var(--radius); padding: 12px; }
+  .metric-card .ml { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); margin-bottom: 4px; }
+  .metric-card .mv { font-size: 22px; font-weight: 300; color: var(--text); }
+  .metric-card .ms { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* ALERTS */
+  .alert-banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 1rem; font-size: 13px; line-height: 1.6; border: 1px solid; }
+  .alert-banner.danger { background: var(--danger-light); color: var(--danger); border-color: #e5aba4; }
+  .alert-banner.ok { background: var(--accent-light); color: var(--accent); border-color: var(--accent-mid); }
+  .alert-banner.warn { background: var(--warning-light); color: var(--warning); border-color: #d4a64a; }
+  .alert-icon { font-size: 16px; flex-shrink: 0; }
+
+  /* SIG BADGES */
+  .sig-badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+  .sig-adverse { background: var(--danger-light); color: var(--danger); }
+  .sig-change { background: var(--warning-light); color: var(--warning); }
+  .sig-normal { background: var(--accent-light); color: var(--accent); }
+
+  /* CHART */
+  .chart-wrap { position: relative; width: 100%; height: 260px; margin-bottom: 1.5rem; }
+
+  /* SCORE */
+  .score-hero { display: flex; align-items: flex-start; gap: 2rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .score-big { font-size: 56px; font-weight: 300; font-family: 'DM Serif Display', serif; line-height: 1; }
+  .score-level { font-size: 14px; color: var(--text2); margin-top: 4px; }
+  .sub-scores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1; min-width: 220px; }
+  .sub-score { background: var(--surface2); border-radius: var(--radius); padding: 10px 14px; }
+  .sub-score .sl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+  .sub-score .sv { font-size: 20px; font-weight: 300; margin-top: 2px; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .tab-panel { animation: fadeUp 0.2s ease; }
+
+  @media (max-width: 620px) {
+    .topbar { padding: 0 1rem; gap: 0.5rem; flex-wrap: wrap; height: auto; padding-top: 8px; padding-bottom: 8px; }
+    .nav-tabs { order: 3; width: 100%; }
+    .nav-tab { padding: 6px 10px; font-size: 12px; flex: 1; text-align: center; }
+    .main { padding: 1rem; }
+    .auth-card { padding: 2rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ AUTH ═══ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Journal Finasteride</div>
+    <div class="auth-sub">Suivi clinique confidentiel des marqueurs de bien-être</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuth('login')">Connexion</button>
+      <button class="auth-tab" onclick="switchAuth('register')">Créer un compte</button>
+    </div>
+
+    <div id="panel-login">
+      <div class="field-group">
+        <label>Nom d'utilisateur</label>
+        <input type="text" id="login-user" placeholder="Votre identifiant" autocomplete="username"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+      </div>
+      <div class="field-group">
+        <label>Mot de passe</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-main" onclick="doLogin()">Se connecter</button>
+      <div id="login-msg" class="auth-msg"></div>
+    </div>
+
+    <div id="panel-register" style="display:none;">
+      <div class="field-group">
+        <label>Nom d'utilisateur</label>
+        <input type="text" id="reg-user" placeholder="Min. 3 caractères" autocomplete="username">
+      </div>
+      <div class="field-group">
+        <label>Mot de passe</label>
+        <input type="password" id="reg-pass" placeholder="Min. 8 caractères" autocomplete="new-password">
+      </div>
+      <div class="field-group">
+        <label>Confirmer le mot de passe</label>
+        <input type="password" id="reg-pass2" placeholder="Répétez le mot de passe" autocomplete="new-password"
+          onkeydown="if(event.key==='Enter')doRegister()">
+      </div>
+      <button class="btn-main" onclick="doRegister()">Créer mon journal</button>
+      <div id="reg-msg" class="auth-msg"></div>
+    </div>
+
+    <div class="security-note">
+      🔒 Vos données sont chiffrées avec <strong>AES-256-GCM</strong> via la Web Crypto API et la clé est dérivée de votre mot de passe (PBKDF2, 200 000 itérations). Rien ne quitte votre appareil — aucun serveur, aucun cloud.
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app-screen">
+  <div class="topbar">
+    <div class="brand">Journal Finasteride</div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="showTab('saisie')">Saisie</button>
+      <button class="nav-tab" onclick="showTab('journal')">Journal</button>
+      <button class="nav-tab" onclick="showTab('analyse')">Analyse</button>
+      <button class="nav-tab" onclick="showTab('score')">Score clinique</button>
+    </nav>
+    <div class="topbar-user">
+      <span id="user-label" style="font-size:13px;"></span>
+      <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- SAISIE -->
+    <div id="tab-saisie" class="tab-panel">
+      <div id="flash-zone"></div>
+      <div class="info-strip">
+        Les <strong>14 premiers jours</strong> constituent votre baseline personnelle — référence statistique individuelle pour détecter des changements réels (et non imaginés) sous traitement.
+      </div>
+      <div class="card">
+        <div class="card-title">Entrée du jour</div>
+        <div class="meta-row">
+          <div class="meta-field">
+            <label>Date</label>
+            <input type="date" id="entry-date">
+          </div>
+          <div class="meta-field">
+            <label>Phase</label>
+            <select id="entry-phase">
+              <option value="pre">Avant traitement (baseline)</option>
+              <option value="post">Sous traitement</option>
+            </select>
+          </div>
+          <div id="day-chip" class="day-chip" style="align-self:flex-end;"></div>
+        </div>
+        <div class="sliders-grid" id="sliders-zone"></div>
+        <div style="margin-bottom:1.25rem;">
+          <div class="flabel" style="display:block;margin-bottom:8px;">Sport aujourd'hui</div>
+          <div class="toggle-group">
+            <button class="toggle-btn" id="sport-oui" onclick="setSport(true)">Oui</button>
+            <button class="toggle-btn" id="sport-non" onclick="setSport(false)">Non</button>
+          </div>
+        </div>
+        <div>
+          <div class="flabel" style="display:block;margin-bottom:6px;">Notes libres</div>
+          <textarea class="notes-area" id="entry-notes" placeholder="Observations, contexte, événements particuliers..."></textarea>
+        </div>
+        <button class="btn-save" onclick="saveEntry()">Enregistrer cette journée</button>
+      </div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div id="tab-journal" class="tab-panel" style="display:none;">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div class="card-title" style="margin:0;">Toutes les entrées</div>
+          <div id="entry-count" style="font-size:12px;color:var(--text3);"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Phase</th><th>Humeur</th><th>Énergie</th><th>Motivation</th>
+                <th>Libido M.</th><th>Libido P.</th><th>Érection</th><th>Concentration</th>
+                <th>Anxiété</th><th>Sommeil</th><th>Sport</th><th>Stress</th>
+                <th>Détresse</th><th>Notes</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="journal-body"></tbody>
+          </table>
+          <div id="journal-empty" class="empty-msg">Aucune entrée pour l'instant. Commencez par renseigner la saisie du jour.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYSE -->
+    <div id="tab-analyse" class="tab-panel" style="display:none;">
+      <div id="alerts-zone"></div>
+      <div class="metric-grid" id="metric-grid"></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+          <div class="section-title" style="margin:0;">Évolution temporelle</div>
+          <select id="chart-metric" onchange="renderChart()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius);font-size:13px;font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);">
+            <option value="humeur">Humeur</option>
+            <option value="energie">Énergie</option>
+            <option value="motivation">Motivation</option>
+            <option value="libidoM">Libido mentale</option>
+            <option value="libidoP">Libido physique</option>
+            <option value="erection">Qualité érection</option>
+            <option value="concentration">Concentration</option>
+            <option value="anxiete">Anxiété</option>
+            <option value="sommeil">Sommeil</option>
+            <option value="stress">Stress</option>
+          </select>
+        </div>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        <div style="display:flex;gap:1.5rem;font-size:12px;color:var(--text3);">
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:24px;height:2px;background:#1D4E8F;border-radius:1px;display:inline-block;"></span>Baseline</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:24px;height:2px;background:#2A6049;border-radius:1px;display:inline-block;"></span>Traitement</span>
+          <span style="display:flex;align-items:center;gap:6px;"><span style="width:24px;height:2px;background:#C0392B;border-radius:1px;display:inline-block;border-top:2px dashed #C0392B;"></span>Moy. baseline</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Significativité statistique par indicateur</div>
+        <div id="sig-table-zone"></div>
+      </div>
+    </div>
+
+    <!-- SCORE CLINIQUE -->
+    <div id="tab-score" class="tab-panel" style="display:none;">
+      <div class="card">
+        <div class="card-title">Score composite clinique</div>
+        <div id="score-content"><div class="empty-msg">Enregistrez au moins 3 jours sous traitement pour calculer le score.</div></div>
+      </div>
+      <div class="info-strip">
+        Le score composite est inspiré du <strong>PHQ-9</strong> (dépression) et de l'<strong>IIEF-5</strong> (fonction érectile), adaptés au suivi finasteride.
+        Il agrège humeur, énergie, libido, concentration et anxiété sur les 7 derniers jours.
+        Un score ≥ 7 suggère une consultation médicale. Ce score est un outil de suivi personnel, non un diagnostic.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CRYPTO  (AES-256-GCM + PBKDF2)
+// ══════════════════════════════════════════════
+const ENC = new TextEncoder();
+const DEC = new TextDecoder();
+
+function b64(u8) { return btoa(String.fromCharCode(...u8)); }
+function ub64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+
+async function deriveKey(password, salt) {
+  const raw = await crypto.subtle.importKey('raw', ENC.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations:200000, hash:'SHA-256' },
+    raw, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+
+async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key  = await deriveKey(password, salt);
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const ct   = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, ENC.encode('VERIFY_OK'));
+  return { salt: b64(salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) };
+}
+
+async function verifyPassword(password, stored) {
+  try {
+    const key = await deriveKey(password, ub64(stored.salt));
+    const pt  = await crypto.subtle.decrypt({ name:'AES-GCM', iv: ub64(stored.iv) }, key, ub64(stored.ct));
+    return DEC.decode(pt) === 'VERIFY_OK';
+  } catch { return false; }
+}
+
+async function encryptData(data, password, saltB64) {
+  const key = await deriveKey(password, ub64(saltB64));
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const ct  = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, ENC.encode(JSON.stringify(data)));
+  return { iv: b64(iv), ct: b64(new Uint8Array(ct)) };
+}
+
+async function decryptData(blob, password, saltB64) {
+  const key = await deriveKey(password, ub64(saltB64));
+  const pt  = await crypto.subtle.decrypt({ name:'AES-GCM', iv: ub64(blob.iv) }, key, ub64(blob.ct));
+  return JSON.parse(DEC.decode(pt));
+}
+
+// ══════════════════════════════════════════════
+//  AUTH STATE
+// ══════════════════════════════════════════════
+let currentUser = null;
+let currentPass = null;
+let entries = [];
+
+function getAccounts() {
+  try { return JSON.parse(localStorage.getItem('fina_accounts') || '{}'); } catch { return {}; }
+}
+function saveAccounts(a) { localStorage.setItem('fina_accounts', JSON.stringify(a)); }
+
+function switchAuth(mode) {
+  document.getElementById('panel-login').style.display    = mode === 'login'    ? '' : 'none';
+  document.getElementById('panel-register').style.display = mode === 'register' ? '' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0)===(mode==='login')));
+}
+
+async function doRegister() {
+  const user  = document.getElementById('reg-user').value.trim();
+  const pass  = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  const msg   = document.getElementById('reg-msg');
+  msg.className = 'auth-msg';
+
+  if (!user || user.length < 3) { msg.textContent = 'Identifiant trop court (min. 3 caractères).'; msg.className = 'auth-msg error'; return; }
+  if (pass.length < 8)          { msg.textContent = 'Mot de passe trop court (min. 8 caractères).'; msg.className = 'auth-msg error'; return; }
+  if (pass !== pass2)           { msg.textContent = 'Les mots de passe ne correspondent pas.';       msg.className = 'auth-msg error'; return; }
+
+  const accounts = getAccounts();
+  if (accounts[user]) { msg.textContent = 'Ce nom d\'utilisateur est déjà pris.'; msg.className = 'auth-msg error'; return; }
+
+  const hashed = await hashPassword(pass);
+  const salt   = crypto.getRandomValues(new Uint8Array(16));
+  accounts[user] = { hash: hashed, salt: b64(salt), data: null };
+  saveAccounts(accounts);
+
+  msg.textContent = 'Compte créé avec succès. Connexion en cours…';
+  msg.className = 'auth-msg success';
+
+  // Auto-login
+  setTimeout(async () => {
+    currentUser = user; currentPass = pass; entries = [];
+    document.getElementById('user-label').textContent = user;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app-screen').style.display  = '';
+    initApp();
+  }, 900);
+}
+
+async function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const msg  = document.getElementById('login-msg');
+  msg.className = 'auth-msg';
+
+  const accounts = getAccounts();
+  if (!accounts[user]) { msg.textContent = 'Identifiant ou mot de passe incorrect.'; msg.className = 'auth-msg error'; return; }
+
+  msg.textContent = 'Déchiffrement en cours…'; msg.className = 'auth-msg success';
+
+  const ok = await verifyPassword(pass, accounts[user].hash);
+  if (!ok) { msg.textContent = 'Identifiant ou mot de passe incorrect.'; msg.className = 'auth-msg error'; return; }
+
+  currentUser = user; currentPass = pass;
+
+  if (accounts[user].data) {
+    try { entries = await decryptData(accounts[user].data, pass, accounts[user].salt); }
+    catch { entries = []; }
+  } else { entries = []; }
+
+  document.getElementById('user-label').textContent = user;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display  = '';
+  initApp();
+}
+
+function doLogout() {
+  currentUser = null; currentPass = null; entries = [];
+  document.getElementById('auth-screen').style.display = '';
+  document.getElementById('app-screen').style.display  = 'none';
+  document.getElementById('login-pass').value  = '';
+  document.getElementById('login-msg').className = 'auth-msg';
+}
+
+async function persistEntries() {
+  const accounts = getAccounts();
+  if (!accounts[currentUser]) return;
+  const blob = await encryptData(entries, currentPass, accounts[currentUser].salt);
+  accounts[currentUser].data = blob;
+  saveAccounts(accounts);
+}
+
+// ══════════════════════════════════════════════
+//  METRICS CONFIG
+// ══════════════════════════════════════════════
+const METRICS = [
+  { key:'humeur',        label:'Humeur',          higher:'better' },
+  { key:'energie',       label:'Énergie',          higher:'better' },
+  { key:'motivation',    label:'Motivation',       higher:'better' },
+  { key:'libidoM',       label:'Libido mentale',   higher:'better' },
+  { key:'libidoP',       label:'Libido physique',  higher:'better' },
+  { key:'erection',      label:'Érection',         higher:'better' },
+  { key:'concentration', label:'Concentration',    higher:'better' },
+  { key:'anxiete',       label:'Anxiété',          higher:'worse'  },
+  { key:'sommeil',       label:'Sommeil',          higher:'better' },
+  { key:'stress',        label:'Stress',           higher:'worse'  },
+];
+
+// ══════════════════════════════════════════════
+//  APP INIT
+// ══════════════════════════════════════════════
+let sportVal = null;
+let chartInst = null;
+
+function initApp() {
+  document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+  const preCount = entries.filter(e=>e.phase==='pre').length;
+  if (preCount >= 14) document.getElementById('entry-phase').value = 'post';
+  buildSliders();
+  setSport(null);
+  updateChip();
+  renderAll();
+  showTab('saisie');
+}
+
+function buildSliders() {
+  const zone = document.getElementById('sliders-zone');
+  zone.innerHTML = '';
+  METRICS.forEach(m => {
+    const d = document.createElement('div');
+    d.className = 'slider-field';
+    d.innerHTML = `
+      <div class="flabel">${m.label}</div>
+      <div class="slider-row">
+        <input type="range" min="1" max="10" value="5" step="1" id="sl-${m.key}"
+          oninput="document.getElementById('sv-${m.key}').textContent=this.value">
+        <span class="slider-val" id="sv-${m.key}">5</span>
+      </div>`;
+    zone.appendChild(d);
+  });
+}
+
+function setSport(v) {
+  sportVal = v;
+  document.getElementById('sport-oui').className = 'toggle-btn' + (v===true  ? ' yes' : '');
+  document.getElementById('sport-non').className = 'toggle-btn' + (v===false ? ' no'  : '');
+}
+
+function updateChip() {
+  const pre  = entries.filter(e=>e.phase==='pre').length;
+  const post = entries.filter(e=>e.phase==='post').length;
+  const chip = document.getElementById('day-chip');
+  if (pre < 14)     chip.textContent = `Baseline : ${pre}/14 jours`;
+  else if (post > 0) chip.textContent = `Jour J+${post} de traitement`;
+  else               chip.textContent = 'Baseline complète';
+}
+
+// ══════════════════════════════════════════════
+//  STATS HELPERS
+// ══════════════════════════════════════════════
+function mean(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function std(arr) {
+  if (arr.length < 2) return 0;
+  const m = mean(arr);
+  return Math.sqrt(arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-1));
+}
+function tStat(a, b) {
+  if (a.length < 2 || b.length < 2) return null;
+  const se = Math.sqrt(std(a)**2/a.length + std(b)**2/b.length);
+  return se ? Math.abs((mean(a)-mean(b))/se) : null;
+}
+
+function computeSignificance() {
+  const pre  = entries.filter(e=>e.phase==='pre');
+  const post = entries.filter(e=>e.phase==='post');
+  if (pre.length < 3 || post.length < 3) return { insuf:true, alertKeys:[] };
+  const alertKeys = [];
+  const results = METRICS.map(m => {
+    const pv = pre.map(e=>e[m.key]);
+    const po = post.map(e=>e[m.key]);
+    const t    = tStat(pv, po);
+    const diff = mean(po) - mean(pv);
+    const sig  = t !== null && t > 2.0;
+    const isAdverse = sig && ((m.higher==='better' && diff < -0.5) || (m.higher==='worse' && diff > 0.5));
+    if (isAdverse) alertKeys.push(m.key);
+    return { key:m.key, label:m.label, mPre:mean(pv), mPost:mean(po), diff, t, sig, isAdverse };
+  });
+  return { results, alertKeys, hasSig: alertKeys.length > 0, insuf: false };
+}
+
+function computeComposite(ents) {
+  if (!ents.length) return { distress:0, sexual:0, cognitive:0, total:0 };
+  const avg = k => mean(ents.map(e=>e[k]||5));
+  const d = (10-avg('humeur')+10-avg('energie')+avg('anxiete')+avg('stress'))/4;
+  const s = (10-avg('libidoM')+10-avg('libidoP')+10-avg('erection'))/3;
+  const c = (10-avg('motivation')+10-avg('concentration'))/2;
+  return { distress:+(d.toFixed(1)), sexual:+(s.toFixed(1)), cognitive:+(c.toFixed(1)), total:+((d+s+c)/3).toFixed(1) };
+}
+
+function pillClass(v, higher) {
+  if (higher==='worse') return v<=3?'pill-green':v<=6?'pill-amber':'pill-red';
+  return v>=7?'pill-green':v>=4?'pill-amber':'pill-red';
+}
+
+// ══════════════════════════════════════════════
+//  SAVE / DELETE
+// ══════════════════════════════════════════════
+async function saveEntry() {
+  const date  = document.getElementById('entry-date').value;
+  const phase = document.getElementById('entry-phase').value;
+  if (!date) { showFlash('Sélectionnez une date.', false); return; }
+
+  const metrics = {};
+  METRICS.forEach(m => { metrics[m.key] = parseInt(document.getElementById('sl-'+m.key).value); });
+  const entry = { date, phase, ...metrics, sport: sportVal, notes: document.getElementById('entry-notes').value };
+
+  const idx = entries.findIndex(e=>e.date===date);
+  if (idx >= 0) {
+    if (!confirm('Une entrée existe déjà pour cette date. La remplacer ?')) return;
+    entries[idx] = entry;
+  } else {
+    entries.push(entry);
+  }
+  entries.sort((a,b)=>a.date.localeCompare(b.date));
+  await persistEntries();
+  document.getElementById('entry-notes').value = '';
+  renderAll();
+  showFlash('Journée enregistrée et chiffrée.', true);
+}
+
+function showFlash(msg, ok) {
+  const z = document.getElementById('flash-zone');
+  z.innerHTML = `<div class="flash ${ok?'ok':'err'}">${msg}</div>`;
+  setTimeout(()=>z.innerHTML='', 2800);
+}
+
+async function deleteEntry(date) {
+  if (!confirm('Supprimer cette entrée définitivement ?')) return;
+  entries = entries.filter(e=>e.date!==date);
+  await persistEntries();
+  renderAll();
+}
+
+// ══════════════════════════════════════════════
+//  RENDER JOURNAL
+// ══════════════════════════════════════════════
+function renderJournal() {
+  const body  = document.getElementById('journal-body');
+  const empty = document.getElementById('journal-empty');
+  const cnt   = document.getElementById('entry-count');
+  if (!entries.length) { body.innerHTML=''; empty.style.display=''; cnt.textContent=''; return; }
+  empty.style.display='none';
+  cnt.textContent = `${entries.filter(e=>e.phase==='pre').length} baseline · ${entries.filter(e=>e.phase==='post').length} traitement`;
+  const sig = computeSignificance();
+  body.innerHTML = [...entries].reverse().map(e => {
+    const s = computeComposite([e]);
+    const adv = !sig.insuf && sig.alertKeys.length > 0 && e.phase==='post';
+    return `<tr class="${adv?'adverse-row':''}">
+      <td style="font-size:12px;">${e.date}</td>
+      <td><span class="phase-tag ${e.phase==='pre'?'tag-pre':'tag-post'}">${e.phase==='pre'?'Baseline':'Traitement'}</span></td>
+      ${METRICS.map(m => {
+        const v = e[m.key];
+        const alert = adv && sig.alertKeys.includes(m.key);
+        return `<td><span class="score-pill ${alert?'pill-alert':pillClass(v,m.higher)}">${v}</span></td>`;
+      }).join('')}
+      <td>${e.sport===true?'✓':e.sport===false?'✗':'—'}</td>
+      <td><span class="score-pill ${s.distress<3?'pill-green':s.distress<6?'pill-amber':'pill-red'}">${s.distress}</span></td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--text3);">${e.notes||''}</td>
+      <td><button class="del-btn" onclick="deleteEntry('${e.date}')">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  RENDER ANALYSIS
+// ══════════════════════════════════════════════
+function renderAnalysis() {
+  const pre  = entries.filter(e=>e.phase==='pre');
+  const post = entries.filter(e=>e.phase==='post');
+  document.getElementById('metric-grid').innerHTML = `
+    <div class="metric-card"><div class="ml">Jours baseline</div><div class="mv">${pre.length}</div><div class="ms">sur 14 cibles</div></div>
+    <div class="metric-card"><div class="ml">Jours traitement</div><div class="mv">${post.length}</div></div>
+    <div class="metric-card"><div class="ml">Humeur moy. base</div><div class="mv">${pre.length?mean(pre.map(e=>e.humeur)).toFixed(1):'—'}</div></div>
+    <div class="metric-card"><div class="ml">Humeur moy. trait.</div><div class="mv">${post.length?mean(post.map(e=>e.humeur)).toFixed(1):'—'}</div></div>
+  `;
+  const alertsZ = document.getElementById('alerts-zone');
+  const sigZ    = document.getElementById('sig-table-zone');
+  const sig = computeSignificance();
+  if (sig.insuf) {
+    alertsZ.innerHTML = `<div class="alert-banner warn"><div class="alert-icon">⚠</div><div>Données insuffisantes. Enregistrez au moins 3 jours baseline et 3 jours sous traitement pour l'analyse statistique.</div></div>`;
+    sigZ.innerHTML = ''; return;
+  }
+  alertsZ.innerHTML = sig.hasSig
+    ? `<div class="alert-banner danger"><div class="alert-icon">⚠</div><div><strong>Changements statistiquement significatifs détectés</strong><br>
+        Les indicateurs suivants varient de façon significative par rapport à votre baseline personnelle :
+        <strong>${sig.alertKeys.map(k=>METRICS.find(m=>m.key===k)?.label).join(', ')}</strong>.
+        Ces résultats méritent d'être discutés avec votre médecin.</div></div>`
+    : `<div class="alert-banner ok"><div class="alert-icon">✓</div><div>Aucun changement statistiquement significatif détecté. Vos marqueurs restent dans la variabilité normale de votre baseline personnelle.</div></div>`;
+
+  sigZ.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Indicateur</th><th>Moy. Baseline</th><th>Moy. Traitement</th><th>Δ</th><th>t-stat</th><th>Résultat</th></tr></thead>
+    <tbody>${sig.results.map(r=>`<tr class="${r.isAdverse?'adverse-row':''}">
+      <td style="font-weight:500;">${r.label}</td>
+      <td>${r.mPre.toFixed(1)}</td>
+      <td>${r.mPost.toFixed(1)}</td>
+      <td style="color:${r.diff<-0.1?'var(--danger)':r.diff>0.1?'var(--accent)':'var(--text3)'};">${r.diff>0?'+':''}${r.diff.toFixed(1)}</td>
+      <td style="font-variant-numeric:tabular-nums;">${r.t!==null?r.t.toFixed(2):'—'}</td>
+      <td><span class="sig-badge ${r.isAdverse?'sig-adverse':r.sig?'sig-change':'sig-normal'}">${r.isAdverse?'⚠ Effet adverse':r.sig?'Changement détecté':'Normal'}</span></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ══════════════════════════════════════════════
+//  RENDER CHART
+// ══════════════════════════════════════════════
+function renderChart() {
+  if (chartInst) { chartInst.destroy(); chartInst = null; }
+  if (!entries.length) return;
+  const key = document.getElementById('chart-metric').value;
+  const labels = entries.map(e=>e.date.slice(5));
+  const preD   = entries.map(e=>e.phase==='pre' ?e[key]:null);
+  const postD  = entries.map(e=>e.phase==='post'?e[key]:null);
+  const preVals = entries.filter(e=>e.phase==='pre').map(e=>e[key]);
+  const avg = preVals.length ? mean(preVals) : null;
+  chartInst = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Baseline',     data:preD,  borderColor:'#1D4E8F', backgroundColor:'rgba(29,78,143,0.06)',  pointRadius:4, tension:0.3, spanGaps:false },
+        { label:'Traitement',   data:postD, borderColor:'#2A6049', backgroundColor:'rgba(42,96,73,0.06)',   pointRadius:4, tension:0.3, spanGaps:false },
+        avg!==null ? { label:'Moy. baseline', data:entries.map(()=>avg), borderColor:'#C0392B', borderDash:[5,4], pointRadius:0, borderWidth:1.5, spanGaps:true } : null,
+      ].filter(Boolean)
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        y:{ min:0, max:10.5, ticks:{ stepSize:2, color:'#A8A49D' }, grid:{ color:'rgba(0,0,0,0.05)' } },
+        x:{ ticks:{ color:'#A8A49D', maxRotation:45, autoSkip:true } }
+      }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+//  RENDER SCORE
+// ══════════════════════════════════════════════
+function renderScore() {
+  const post = entries.filter(e=>e.phase==='post');
+  const el   = document.getElementById('score-content');
+  if (post.length < 3) { el.innerHTML='<div class="empty-msg">Enregistrez au moins 3 jours sous traitement.</div>'; return; }
+  const ref = post.slice(-7);
+  const s   = computeComposite(ref);
+  const [level, col] = s.distress < 3 ? ['Aucun effet détecté','var(--accent)']
+    : s.distress < 5 ? ['Léger — surveillance recommandée','var(--warning)']
+    : s.distress < 7 ? ['Modéré — consultation conseillée','var(--danger)']
+    : ['Sévère — consultez rapidement','var(--danger)'];
+  el.innerHTML = `
+    <div class="score-hero">
+      <div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:6px;">Score de détresse composite</div>
+        <div class="score-big" style="color:${col};">${s.distress}</div>
+        <div class="score-level">${level}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Sur 7 derniers jours · ${ref.length} entrées</div>
+      </div>
+      <div class="sub-scores">
+        <div class="sub-score"><div class="sl">Humeur &amp; Énergie</div><div class="sv">${s.distress}/10</div></div>
+        <div class="sub-score"><div class="sl">Fonction sexuelle</div><div class="sv">${s.sexual}/10</div></div>
+        <div class="sub-score"><div class="sl">Cognition</div><div class="sv">${s.cognitive}/10</div></div>
+        <div class="sub-score"><div class="sl">Score global</div><div class="sv">${s.total}/10</div></div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text2);border-top:1px solid var(--border);padding-top:1rem;">
+      <strong>Interprétation :</strong> 0–2.9 Aucun · 3–4.9 Léger (surveillance) · 5–6.9 Modéré (consultation) · ≥ 7 Sévère (consultation urgente)
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════
+function showTab(t) {
+  const tabs = ['saisie','journal','analyse','score'];
+  tabs.forEach(id => document.getElementById('tab-'+id).style.display = id===t?'':'none');
+  document.querySelectorAll('.nav-tab').forEach((el,i)=>el.classList.toggle('active', tabs[i]===t));
+  if (t==='journal') renderJournal();
+  if (t==='analyse') { renderAnalysis(); renderChart(); }
+  if (t==='score')   renderScore();
+}
+
+function renderAll() { updateChip(); renderJournal(); }
+
+// Init: login-user → focus pass on Enter already wired inline
+</script>
+</body>
+</html>
